@@ -102,16 +102,16 @@ SELECT r.*,NTILE(4) OVER (ORDER BY Recency desc ) rfm_recency	,
 		   NTILE(4) OVER (ORDER BY MonetaryValue) rfm_monetary
 from RFM r
 )
-
 SELECT c.*, rfm_recency+ rfm_frequency+rfm_monetary as rfm_cell,
 cast(rfm_recency as varchar)+ cast(rfm_frequency as varchar)+cast(rfm_monetary as varchar) as rfm_cell_string
 into #rfm
 from rfm_calc c
 
+	 
 -- Created a table.
-
-
-select CUSTOMERNAME , rfm_recency, rfm_frequency, rfm_monetary,
+---------------------------------------------------------------------------------
+-- Creating a column stating the status of customers with respect to frequency, recency.
+Select CUSTOMERNAME , rfm_recency, rfm_frequency, rfm_monetary,
 	case 
 		when rfm_cell_string in (111, 112 , 121, 122, 123, 132, 211, 212, 114, 141, 221) then 'lost_customers'  --lost customers
 		when rfm_cell_string in (133, 134, 143, 244, 334, 343, 344, 144, 234) then 'slipping away, cannot lose' -- (Big spenders who haven’t purchased lately)
@@ -122,16 +122,16 @@ select CUSTOMERNAME , rfm_recency, rfm_frequency, rfm_monetary,
 	end rfm_segment
 from #rfm
 
--- Finding which products are often sold together
-select distinct OrderNumber, stuff(
 
-	(select ',' + PRODUCTCODE
-	from [dbo].[sales_data_sample] p
+---------------------------------------------------------------------------------
+--Finding which products are often sold together
+Select distinct OrderNumber, stuff(
+	(Select ',' + PRODUCTCODE
+	From [sales_data_sample] p
 	where ORDERNUMBER in 
 		(
-
-			select ORDERNUMBER
-			from (
+			Select ORDERNUMBER
+			From (
 				select ORDERNUMBER, count(*) rn
 				FROM [sales_data_sample]
 				where STATUS = 'Shipped'
@@ -141,17 +141,18 @@ select distinct OrderNumber, stuff(
 		)
 		and p.ORDERNUMBER = s.ORDERNUMBER
 		for xml path (''))
-
 		, 1, 1, '') ProductCodes
-
-from [dbo].[sales_data_sample] s
+from [sales_data_sample] s
 order by 2 desc
 
---Which country has had the highest number of sales 
+---------------------------------------------------------------------------------
+-- Distinct Countries
 
 Select distinct country From [dbo].[sales_data_sample]
 
+--Which country has had the highest number of sales:
 
+	 
 Select country, sum (sales) Revenue
 From [dbo].[sales_data_sample]
 --Where country = 'Canada'
